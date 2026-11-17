@@ -132,4 +132,9 @@ if __name__ == "__main__":
             sys.argv.pop(1)
             ds.main()
             sys.exit(0)
+        elif cmd in ("hud", "desktop-hud"):
+            from ui.desktop_hud import main as hud_main
+            sys.argv.pop(1)
+            hud_main()
+            sys.exit(0)
     main()

@@ -13,6 +13,7 @@ if "%~1"=="doctor" goto do_doctor
 if "%~1"=="client" goto do_client
 if "%~1"=="server" goto do_server
 if "%~1"=="hud" goto do_hud
+if "%~1"=="desktop-hud" goto do_desktop_hud
 if "%~1"=="test" goto do_test
 
 %PY_CMD% "%~dp0main.py" %*
@@ -36,6 +37,11 @@ goto :eof
 :do_hud
 shift
 %PY_CMD% "%~dp0server\daku_server.py" --hud %1 %2 %3 %4 %5 %6 %7 %8 %9
+goto :eof
+
+:do_desktop_hud
+shift
+%PY_CMD% "%~dp0ui\desktop_hud.py" %1 %2 %3 %4 %5 %6 %7 %8 %9
 goto :eof
 
 :do_test

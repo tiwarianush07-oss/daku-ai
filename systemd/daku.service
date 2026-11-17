@@ -1,0 +1,39 @@
+[Unit]
+Description=DAKU Personal AI Voice Agent Server
+Documentation=https://github.com/anush07/DAKU
+After=network.target network-online.target hermes.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=daku
+Group=daku
+WorkingDirectory=/opt/daku
+EnvironmentFile=-/etc/daku/daku.env
+ExecStart=/usr/bin/python3 /opt/daku/server/daku_server.py --host 127.0.0.1 --port 8443
+Restart=always
+RestartSec=5s
+
+# Security Hardening
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=read-only
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+
+# Resource Limits (Optimized for Free-Tier VM)
+MemoryMax=512M
+MemoryHigh=384M
+CPUQuota=80%
+
+# Standard logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=daku-server
+
+[Install]
+WantedBy=multi-user.target

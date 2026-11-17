@@ -1,0 +1,122 @@
+{
+  "version": "1.0.0",
+  "default_policy": "CONFIRMATION_REQUIRED",
+  "default_rate_limit_per_minute": 30,
+  "default_rate_limit_burst": 5,
+  "forbidden_env_keys": [
+    "MODEL_API_KEY",
+    "SARVAM_API_KEY",
+    "DAKU_AUTH_TOKEN",
+    "DEEPSEEK_API_KEY",
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "HARNESS_API_KEY",
+    "UNCENSORED_API_KEY",
+    "GITHUB_TOKEN",
+    "GITHUB_PERSONAL_ACCESS_TOKEN",
+    "SUPABASE_KEY"
+  ],
+  "servers": {
+    "chrome-devtools-mcp": {
+      "default_level": "SAFE",
+      "rate_limit_per_minute": 60,
+      "rate_limit_burst": 10,
+      "allowed_env_keys": ["PATH", "TEMP", "TMP", "LOCALAPPDATA", "CHROME_BIN"],
+      "tools": {
+        "navigate_page": "SAFE",
+        "new_page": "SAFE",
+        "list_pages": "SAFE",
+        "inspect_elements": "SAFE",
+        "evaluate_script": "CONFIRMATION_REQUIRED",
+        "delete_cookie": "CONFIRMATION_REQUIRED"
+      }
+    },
+    "context7": {
+      "default_level": "SAFE",
+      "rate_limit_per_minute": 30,
+      "rate_limit_burst": 5,
+      "allowed_env_keys": ["PATH", "TEMP", "TMP"],
+      "tools": {
+        "resolve-library-id": "SAFE",
+        "query-docs": "SAFE"
+      }
+    },
+    "playwright": {
+      "default_level": "SAFE",
+      "rate_limit_per_minute": 30,
+      "rate_limit_burst": 5,
+      "allowed_env_keys": ["PATH", "TEMP", "TMP", "LOCALAPPDATA"],
+      "tools": {
+        "browser_navigate": "SAFE",
+        "browser_snapshot": "SAFE",
+        "browser_take_screenshot": "SAFE",
+        "browser_click": "SAFE",
+        "browser_type": "SAFE",
+        "browser_select_option": "SAFE",
+        "browser_fill_form": "CONFIRMATION_REQUIRED",
+        "browser_run_code_unsafe": "BLOCKED"
+      }
+    },
+    "adk-docs-mcp": {
+      "default_level": "SAFE",
+      "rate_limit_per_minute": 30,
+      "rate_limit_burst": 5,
+      "allowed_env_keys": ["PATH", "TEMP", "TMP"],
+      "tools": {
+        "fetch_docs": "SAFE",
+        "list_doc_sources": "SAFE"
+      }
+    },
+    "code-review-graph": {
+      "default_level": "SAFE",
+      "rate_limit_per_minute": 30,
+      "rate_limit_burst": 5,
+      "allowed_env_keys": ["PATH", "TEMP", "TMP"],
+      "tools": {
+        "analyze_code": "SAFE",
+        "query_graph": "SAFE",
+        "apply_refactor": "CONFIRMATION_REQUIRED"
+      }
+    },
+    "github-mcp-server": {
+      "default_level": "CONFIRMATION_REQUIRED",
+      "rate_limit_per_minute": 20,
+      "rate_limit_burst": 3,
+      "allowed_env_keys": ["PATH", "GITHUB_PERSONAL_ACCESS_TOKEN"],
+      "tools": {
+        "search_repositories": "SAFE",
+        "get_file_contents": "SAFE",
+        "create_issue": "CONFIRMATION_REQUIRED",
+        "create_pull_request": "CONFIRMATION_REQUIRED",
+        "push_files": "CONFIRMATION_REQUIRED",
+        "delete_branch": "BLOCKED",
+        "delete_repository": "BLOCKED"
+      }
+    },
+    "supabase": {
+      "default_level": "CONFIRMATION_REQUIRED",
+      "rate_limit_per_minute": 20,
+      "rate_limit_burst": 3,
+      "allowed_env_keys": ["PATH"],
+      "tools": {
+        "query_tables": "SAFE",
+        "insert_row": "CONFIRMATION_REQUIRED",
+        "update_row": "CONFIRMATION_REQUIRED",
+        "delete_row": "BLOCKED",
+        "drop_table": "BLOCKED"
+      }
+    },
+    "mcp-toolbox-for-databases": {
+      "default_level": "CONFIRMATION_REQUIRED",
+      "rate_limit_per_minute": 20,
+      "rate_limit_burst": 3,
+      "allowed_env_keys": ["PATH"],
+      "tools": {
+        "read_query": "SAFE",
+        "write_query": "CONFIRMATION_REQUIRED",
+        "execute_ddl": "BLOCKED",
+        "drop_database": "BLOCKED"
+      }
+    }
+  }
+}

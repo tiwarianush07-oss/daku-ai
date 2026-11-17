@@ -1,0 +1,54 @@
+{
+  "timestamp": "2026-09-05T13:59:59Z",
+  "all_passed": true,
+  "results": {
+    "safe_system_info": {
+      "status": "PASS",
+      "latency_ms": 399.78,
+      "evidence": "RAM: 0.65 GB free / 3.44 GB total | CPU: AMD64 Family 23 Model 24 Stepping 1, AuthenticAMD (2 cores) | OS: Windows 10 (Build 10.0.19045)"
+    },
+    "safe_file_operation": {
+      "status": "PASS",
+      "latency_ms": 13.58,
+      "evidence": "Found 17 .md files | README.md size: 6.29 KB (modified: 2026-09-05 16:30:17)"
+    },
+    "safe_app_launch": {
+      "status": "PASS",
+      "latency_ms": 1110.77,
+      "evidence": "Launched: Notepad (C:\\WINDOWS\\system32\\notepad.exe), running verification: True, cleaned up via taskkill"
+    },
+    "confirmation_gate": {
+      "status": "PASS",
+      "evidence": "Denied: executed=False (file_exists=False) | Approved: executed=True (verified file content written & cleaned up)"
+    },
+    "blocked_operations": {
+      "status": "PASS",
+      "evidence": "All 9 prohibited operations and injection patterns permanently blocked."
+    },
+    "mcp_infrastructure": {
+      "status": "PASS",
+      "evidence": "Discovered 23 MCP servers with 49 tools. MCP permission boundary strictly enforced (arbitrary shell rejected)."
+    },
+    "browser_automation": {
+      "status": "PASS",
+      "evidence": "Valid navigation: Opened https://example.com in browser. | JavaScript injection scheme rejected: Security Block: Access to 'javascript:' URL scheme is prohibited."
+    },
+    "voice_pipeline": {
+      "status": "PASS",
+      "evidence": "STT: Active provider 'text_fallback' (Mic available: False) | TTS SAPI Voices: 2 installed (Microsoft David Desktop, Microsoft Zira Desktop) | Synthesis execution: True"
+    },
+    "failure_fallback": {
+      "status": "PASS",
+      "evidence": "Hermes offline handled (stopped) | LLM offline fallback: 'You have approximately 0.39 GB of free R...' | Unreachable server handled without crash"
+    },
+    "resource_safety": {
+      "status": "PASS",
+      "evidence": "Current Process Working Set: 33.12 MB | Forbidden modules loaded: [] | Local Model Guard: OK"
+    },
+    "e2e_roundtrip": {
+      "status": "PASS",
+      "latency_ms": 14.43,
+      "evidence": "Health probe: Connected to Remote DAKU Server (Model: deepseek-chat, Hermes: stopped) | Valid Bearer Chat: 'You have approximately 0.36 GB of free R...' (14.43 ms) | Invalid Bearer: 'Authentication failed with remote DAKU s...'"
+    }
+  }
+}

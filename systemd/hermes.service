@@ -1,0 +1,37 @@
+[Unit]
+Description=Hermes Agent Headless Gateway Service
+Documentation=https://github.com/NousResearch/hermes-agent
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=daku
+Group=daku
+WorkingDirectory=/home/daku
+Environment="HOME=/home/daku"
+Environment="PATH=/home/daku/.local/bin:/usr/local/bin:/usr/bin:/bin"
+EnvironmentFile=-/etc/daku/hermes.env
+ExecStart=/home/daku/.local/bin/hermes gateway --host 127.0.0.1 --port 8080
+Restart=always
+RestartSec=10s
+
+# Security Hardening
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+
+# Resource Limits
+MemoryMax=1024M
+MemoryHigh=768M
+CPUQuota=90%
+
+# Standard logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hermes-gateway
+
+[Install]
+WantedBy=multi-user.target

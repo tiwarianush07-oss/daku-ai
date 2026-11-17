@@ -1,0 +1,92 @@
+[
+  {
+    "lesson_id": "succ_1789625123583_0",
+    "task_type": "app_launch",
+    "failed_action": null,
+    "failure_reason": null,
+    "successful_action": "application_tool:launch",
+    "strategy_name": "application_tool_verified",
+    "context": {
+      "user_query": "open notepad"
+    },
+    "timestamp": 1789625123.5835388,
+    "confidence": 0.95,
+    "reusable": true,
+    "usage_count": 4
+  },
+  {
+    "lesson_id": "fail_1789625123639_1",
+    "task_type": "app_launch",
+    "failed_action": "application_tool:{'action': 'launch', 'app_name': 'chrome'}",
+    "failure_reason": "Chrome executable not found or failed to start.",
+    "successful_action": "application_tool",
+    "strategy_name": null,
+    "context": {
+      "user_query": "open chrome"
+    },
+    "timestamp": 1789625123.6393802,
+    "confidence": 0.85,
+    "reusable": true,
+    "usage_count": 0
+  },
+  {
+    "lesson_id": "succ_1789625123645_2",
+    "task_type": "app_launch",
+    "failed_action": null,
+    "failure_reason": null,
+    "successful_action": "application_tool:launch",
+    "strategy_name": "application_tool_verified",
+    "context": {
+      "user_query": "open chrome"
+    },
+    "timestamp": 1789625123.6456513,
+    "confidence": 0.95,
+    "reusable": true,
+    "usage_count": 0
+  },
+  {
+    "lesson_id": "succ_1789625139628_3",
+    "task_type": "app_launch",
+    "failed_action": null,
+    "failure_reason": null,
+    "successful_action": "application_tool:launch",
+    "strategy_name": "application_tool_verified",
+    "context": {
+      "user_query": "open notepad"
+    },
+    "timestamp": 1789625139.6286137,
+    "confidence": 0.95,
+    "reusable": true,
+    "usage_count": 0
+  },
+  {
+    "lesson_id": "fail_1789625139716_4",
+    "task_type": "app_launch",
+    "failed_action": "application_tool:{'action': 'launch', 'app_name': 'chrome'}",
+    "failure_reason": "Chrome executable not found or failed to start.",
+    "successful_action": "application_tool",
+    "strategy_name": null,
+    "context": {
+      "user_query": "open chrome"
+    },
+    "timestamp": 1789625139.716307,
+    "confidence": 0.85,
+    "reusable": true,
+    "usage_count": 0
+  },
+  {
+    "lesson_id": "succ_1789625139756_5",
+    "task_type": "app_launch",
+    "failed_action": null,
+    "failure_reason": null,
+    "successful_action": "application_tool:launch",
+    "strategy_name": "application_tool_verified",
+    "context": {
+      "user_query": "open chrome"
+    },
+    "timestamp": 1789625139.7564743,
+    "confidence": 0.95,
+    "reusable": true,
+    "usage_count": 0
+  }
+]

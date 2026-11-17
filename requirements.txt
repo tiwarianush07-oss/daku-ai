@@ -1,0 +1,9 @@
+# DAKU — Core Dependencies
+# Phase 1 uses Python 3.13 Standard Library (0 extra MB RAM needed)
+
+# Speech-to-Text & Audio Capture (Phase 1.5)
+SpeechRecognition>=3.10.0
+PyAudio>=0.2.14
+
+# Optional plugins for enhanced voice:
+# edge-tts>=6.1.0        # High-quality Microsoft neural TTS

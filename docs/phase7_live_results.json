@@ -1,0 +1,41 @@
+{
+  "timestamp": "2026-09-19 12:55:30",
+  "server_url": "http://127.0.0.1:8443",
+  "gates": {
+    "gate1_endpoints": {
+      "status": "PASS"
+    },
+    "gate2_microphone_pipeline": {
+      "status": "PASS"
+    },
+    "gate3_voice_lifecycle": {
+      "status": "PASS"
+    },
+    "gate4_safe_request": {
+      "status": "PASS"
+    },
+    "gate5_confirmation_required": {
+      "status": "PASS"
+    },
+    "gate6_blocked_request": {
+      "status": "PASS"
+    },
+    "gate7_central_brain_dominance": {
+      "status": "PASS"
+    },
+    "gate8_visual_agents": {
+      "status": "PASS"
+    },
+    "gate9_audio_and_transitions": {
+      "status": "PASS"
+    },
+    "gate10_zero_secret_leakage": {
+      "status": "PASS"
+    },
+    "gate11_transparent_fallback": {
+      "status": "PASS"
+    }
+  },
+  "all_passed": true,
+  "passed_gates": "11/11"
+}

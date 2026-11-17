@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAKU — Solar AI Agent Swarm HUD</title>
+  <link rel="stylesheet" href="/hud/solar_hud.css">
+</head>
+<body>
+  <div id="hud-app">
+    <!-- Background Starfield & Celestial Canvas -->
+    <canvas id="solar-canvas"></canvas>
+
+    <!-- Top HUD Bar -->
+    <header id="hud-header">
+      <div class="header-left">
+        <div class="hud-logo">
+          <span class="logo-sun-icon"></span>
+          <div class="logo-text">
+            <span class="logo-title">DAKU</span>
+            <span class="logo-subtitle">SOLAR SWARM HUD // v7.0</span>
+          </div>
+        </div>
+        <div class="system-status-pill" id="system-status-badge">
+          <span class="status-dot"></span>
+          <span class="status-label" id="system-status-text">CONNECTING</span>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="hud-turn-status" id="hud-turn-badge" data-state="STANDBY">
+          <span class="turn-dot"></span>
+          <span class="turn-state-label" id="hud-state-label">STANDBY</span>
+          <span class="turn-detail" id="hud-state-detail">Ready for voice or text prompt</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="telemetry-pill" id="telemetry-ram">
+          <span class="metric-label">RAM:</span>
+          <span class="metric-val" id="metric-ram-val">-- MB</span>
+        </div>
+        <div class="telemetry-pill" id="telemetry-tools">
+          <span class="metric-label">TOOLS:</span>
+          <span class="metric-val" id="metric-tools-val">-- Ready</span>
+        </div>
+        <button class="hud-btn" id="btn-add-agent-modal" title="Configure UI Agent Profile">
+          <span class="btn-icon">+</span>
+          <span>Add Agent</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Interactive Camera Controls Overlay -->
+    <div id="camera-controls">
+      <button class="cam-btn" id="btn-cam-reset" title="Reset Camera View to Solar System">System View</button>
+      <button class="cam-btn" id="btn-cam-sun" title="Focus Central Sun (DAKU Brain)">Focus Brain</button>
+      <div class="cam-zoom-group">
+        <button class="cam-btn-icon" id="btn-cam-zoom-in" title="Zoom In">+</button>
+        <button class="cam-btn-icon" id="btn-cam-zoom-out" title="Zoom Out">&minus;</button>
+      </div>
+    </div>
+
+    <!-- Agent Quick-Select Bar -->
+    <div id="agent-quickbar">
+      <div class="quickbar-label">ORBITAL AGENTS</div>
+      <div class="quickbar-agents" id="quickbar-agent-list">
+        <!-- Injected dynamically via JS -->
+      </div>
+    </div>
+
+    <!-- Telemetry & Capability Drawer (Slide-in) -->
+    <aside id="telemetry-drawer" class="drawer-closed">
+      <div class="drawer-header">
+        <div class="drawer-title-group">
+          <span class="drawer-agent-icon" id="drawer-icon">☀️</span>
+          <div>
+            <h2 id="drawer-agent-name">DAKU Central Brain</h2>
+            <div class="drawer-agent-role" id="drawer-agent-role">Autonomous Core & Multi-Pass Reasoner</div>
+          </div>
+        </div>
+        <button class="drawer-close-btn" id="btn-drawer-close">&times;</button>
+      </div>
+
+      <div class="drawer-content">
+        <div class="drawer-section">
+          <div class="section-title">REAL-TIME STATUS</div>
+          <div class="status-box">
+            <div class="status-box-row">
+              <span class="row-label">Visual State:</span>
+              <span class="row-value badge-state" id="drawer-agent-state">IDLE</span>
+            </div>
+            <div class="status-box-row">
+              <span class="row-label">Operational Mode:</span>
+              <span class="row-value" id="drawer-agent-mode">Core Engine</span>
+            </div>
+            <div class="status-box-row">
+              <span class="row-label">Active Provider:</span>
+              <span class="row-value" id="drawer-agent-provider">DirectModelRouter</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="drawer-section">
+          <div class="section-title">CAPABILITIES & REGISTERED TOOLS</div>
+          <div class="capability-tags" id="drawer-capabilities-list">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <div class="drawer-section">
+          <div class="section-title">AUTHORIZATION & SECURITY BOUNDARY</div>
+          <div class="security-box">
+            <div class="sec-row">
+              <span class="sec-badge sec-safe">SAFE</span>
+              <span>Read-only queries, system metrics, safe file inspection</span>
+            </div>
+            <div class="sec-row">
+              <span class="sec-badge sec-confirm">CONFIRMATION</span>
+              <span>App launch, file write/delete, sensitive browser interactions</span>
+            </div>
+            <div class="sec-row">
+              <span class="sec-badge sec-blocked">BLOCKED</span>
+              <span>Arbitrary shell execution, credential leakage, privilege escalation</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="drawer-section">
+          <div class="section-title">LIVE TELEMETRY & RECENT ACTIONS</div>
+          <div class="telemetry-feed" id="drawer-telemetry-feed">
+            <div class="feed-item">
+              <span class="feed-time">00:00:00</span>
+              <span class="feed-msg">Agent initialized and mapped to DAKU capability.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Bottom HUD Bar: Real Voice Session & Conversation Controller -->
+    <footer id="hud-footer">
+      <div class="footer-left">
+        <div class="voice-provider-info">
+          <div class="provider-row">
+            <span class="p-label">STT:</span>
+            <span class="p-val" id="hud-stt-provider">Sarvam Saaras / Google STT Fallback</span>
+          </div>
+          <div class="provider-row">
+            <span class="p-label">TTS:</span>
+            <span class="p-val" id="hud-tts-provider">Sarvam Bulbul / Windows SAPI Fallback</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center Voice Push-To-Talk / Mic Button -->
+      <div class="footer-center">
+        <div class="mic-container">
+          <div class="mic-wave-ring" id="mic-wave-pulse"></div>
+          <button class="mic-btn" id="btn-hud-mic" title="Click to Talk with DAKU Voice Session">
+            <svg class="mic-icon" viewBox="0 0 24 24" width="28" height="28">
+              <path fill="currentColor" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+              <path fill="currentColor" d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="mic-instruction" id="mic-instruction-label">Click Mic to Speak</div>
+      </div>
+
+      <!-- Text Input & Manual Fallback Input -->
+      <div class="footer-right">
+        <form id="text-prompt-form" class="hud-input-group">
+          <input type="text" id="hud-text-input" placeholder="Type instructions or command for DAKU..." autocomplete="off">
+          <button type="submit" class="hud-send-btn" id="btn-hud-send">Send</button>
+        </form>
+      </div>
+    </footer>
+
+    <!-- Audio Element for Playback of Synthesized Speech -->
+    <audio id="hud-audio-player" style="display:none;"></audio>
+
+    <!-- Live Transcript & Spoken Response Bubble -->
+    <div id="dialogue-overlay" class="dialogue-hidden">
+      <div class="dialogue-box">
+        <div class="dialogue-speaker" id="dialogue-speaker-label">DAKU BRAIN</div>
+        <div class="dialogue-text" id="dialogue-content">Awaiting session input...</div>
+      </div>
+    </div>
+
+    <!-- Permission Confirmation Modal -->
+    <div id="confirmation-modal" class="modal-backdrop modal-hidden">
+      <div class="modal-card modal-caution">
+        <div class="modal-header">
+          <span class="modal-icon">&#9888;</span>
+          <h3>Permission Confirmation Required</h3>
+        </div>
+        <div class="modal-body">
+          <p class="modal-prompt" id="modal-confirm-prompt">
+            DAKU is requesting authorization to execute a sensitive action.
+          </p>
+          <div class="modal-action-details">
+            <div class="detail-row">
+              <span class="detail-key">Action / Command:</span>
+              <span class="detail-val" id="modal-confirm-action">--</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-key">Target Tool:</span>
+              <span class="detail-val" id="modal-confirm-tool">--</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-key">Security Level:</span>
+              <span class="detail-val sec-confirm">CONFIRMATION_REQUIRED</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-btn btn-deny" id="btn-modal-deny">Deny Action</button>
+          <button class="modal-btn btn-confirm" id="btn-modal-confirm">Authorize Execution</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add / Configure Agent Profile Modal -->
+    <div id="add-agent-modal" class="modal-backdrop modal-hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <span class="modal-icon">&#10024;</span>
+          <h3>Configure Agent Visual Profile</h3>
+        </div>
+        <div class="modal-body">
+          <p class="modal-note">
+            Profiles configure UI-level visualization and tracking. All executions remain strictly subject to DAKU Brain authorization and existing system permissions.
+          </p>
+          <form id="form-add-agent">
+            <div class="form-group">
+              <label for="input-agent-name">Agent Name</label>
+              <input type="text" id="input-agent-name" placeholder="e.g. Data Auditor" required maxlength="32">
+            </div>
+            <div class="form-group">
+              <label for="select-agent-capability">Mapped Capability</label>
+              <select id="select-agent-capability" required>
+                <option value="research">Research & Search (Researcher)</option>
+                <option value="coding">Coding & Execution (Coder Agent)</option>
+                <option value="vision">Vision & Inspection (Vision Analyst)</option>
+                <option value="planning">Planning & Orchestration (Executive Strategist)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="input-agent-color">Orbital Color / Hue</label>
+              <input type="color" id="input-agent-color" value="#00d2ff">
+            </div>
+            <div class="form-group">
+              <label for="input-agent-desc">Description / Profile Notes</label>
+              <input type="text" id="input-agent-desc" placeholder="UI tracking notes" maxlength="64">
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="modal-btn btn-deny" id="btn-close-add-agent">Cancel</button>
+              <button type="submit" class="modal-btn btn-confirm">Save Profile</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/hud/solar_hud.js"></script>
+</body>
+</html>

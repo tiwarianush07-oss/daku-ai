@@ -1,0 +1,43 @@
+# Environments & Dependencies
+.venv/
+.venv*/
+venv/
+env/
+node_modules/
+.playwright-mcp/
+reference/
+ai-agents-for-beginners/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local Databases, Logs & Ephemeral Data
+data/*.db
+data/*.db-wal
+data/*.db-shm
+*.log
+temp_*.txt
+new_file.txt
+
+# Secrets & Local Configurations
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+
+# OS Artifacts
+desktop.ini
+Thumbs.db
+.DS_Store
+
+# Generated Reports & Graph Indexes
+graphify-out/
+adk-validation/

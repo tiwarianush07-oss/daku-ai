@@ -19,7 +19,7 @@ logger = logging.getLogger("daku.voice.google_stt")
 class GoogleSTTProvider(STTProvider):
     """
     Google Web STT provider implementing STTProvider interface.
-    Serves as the primary cloud fallback when Sarvam STT is unavailable.
+    Serves as the primary cloud STT provider with offline text fallback.
     """
 
     def __init__(self, language: str = "en-IN"):

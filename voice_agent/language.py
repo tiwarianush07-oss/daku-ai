@@ -1,7 +1,7 @@
 """
 DAKU Indic Language Utilities
 Provides BCP-47 language mappings, Indic Unicode script detection,
-and script normalization for Sarvam Voice Agents.
+and script normalization for DAKU Voice Agents.
 """
 
 import re

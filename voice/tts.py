@@ -123,21 +123,6 @@ class TextToSpeechEngine:
             print(f"[DAKU]: {text.strip()}")
             return True
 
-        if self.provider in ("sarvam", "sarvam_tts", "bulbul"):
-            try:
-                from voice.providers.sarvam_tts import SarvamTTSProvider
-                sarvam = SarvamTTSProvider()
-                if sarvam.is_available():
-                    from voice_agent.normalizer import TTSNormalizer
-                    clean_text = TTSNormalizer.clean_for_speech(text)
-                    ok = sarvam.speak(clean_text)
-                    if ok:
-                        return True
-            except Exception:
-                pass
-            # Fall back to native Windows SAPI
-            return self.native_tts.speak(text)
-
         if self.provider == "edge_tts" and self.edge_tts.is_available():
             ok = self.edge_tts.speak(text)
             if ok:

@@ -717,7 +717,7 @@
       // Check if STT was performed
       if (data.transcript) {
         showDialogue('USER (Transcribed)', data.transcript);
-        logTelemetry('brain', `STT transcribed: "${data.transcript}" via ${data.stt_provider || 'Sarvam Saaras'}`);
+        logTelemetry('brain', `STT transcribed: "${data.transcript}" via ${data.stt_provider || 'Google STT'}`);
       }
 
       // Check if permission confirmation is required
@@ -742,7 +742,7 @@
 
       // Audio Playback
       if (data.audio_base64) {
-        setUIState(UIStates.SPEAKING, `Speaking via ${data.tts_provider || 'Sarvam Bulbul'}`);
+        setUIState(UIStates.SPEAKING, `Speaking via ${data.tts_provider || 'Windows SAPI'}`);
         await playAudioBase64(data.audio_base64);
       } else if (data.tts_provider === 'windows_sapi') {
         setUIState(UIStates.SPEAKING, 'Spoken via Windows SAPI native audio');

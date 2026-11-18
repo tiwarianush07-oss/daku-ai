@@ -1,6 +1,6 @@
 """
 DAKU TTS Normalizer Module
-Preprocesses and cleans agent responses before sending to Sarvam Bulbul v3.
+Preprocesses and cleans agent responses before speech synthesis.
 Ensures:
 1. Native Indic script preservation.
 2. Contextual Indic transliteration (e.g. 'aapka order confirm ho gaya hai' -> 'आपका order confirm हो गया है।').
@@ -87,7 +87,7 @@ PRESERVED_TECH_TERMS: Set[str] = {
 
 class TTSNormalizer:
     """
-    Spoken text normalizer optimizing DAKU agent responses for Bulbul v3.
+    Spoken text normalizer optimizing DAKU agent responses for speech synthesis.
     """
 
     @classmethod

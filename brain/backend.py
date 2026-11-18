@@ -636,157 +636,12 @@ class UncensoredR1Backend(AgentBackend):
             return f"Uncensored R1 encountered an unexpected error: {str(e)}"
 
 
-class SarvamLLMBackend(AgentBackend):
-    """
-    Sarvam AI LLM Agent Backend.
-    Uses official Sarvam OpenAI-compatible Chat Completions endpoint (https://api.sarvam.ai/v1/chat/completions).
-    Models: sarvam-105b-conversations (conversational) or sarvam-105b (agentic reasoning).
-    Supports tool calling, multi-pass reasoning, and graceful offline fallback.
-    """
-
-    def __init__(
-        self,
-        endpoint: Optional[str] = None,
-        api_key: Optional[str] = None,
-        model_name: Optional[str] = None,
-        timeout: float = 15.0,
-        tool_registry: Optional[ToolRegistry] = None,
-        reasoner: Optional[MultiPassReasoner] = None,
-    ):
-        self.endpoint = (endpoint or os.getenv("SARVAM_BASE_URL", "https://api.sarvam.ai")).rstrip("/")
-        if not self.endpoint.endswith("/chat/completions"):
-            if not self.endpoint.endswith("/v1"):
-                self.endpoint = f"{self.endpoint}/v1/chat/completions"
-            else:
-                self.endpoint = f"{self.endpoint}/chat/completions"
-
-        self.api_key = (api_key or os.getenv("SARVAM_API_KEY", "")).strip()
-        self.model_name = (model_name or os.getenv("SARVAM_LLM_MODEL", "sarvam-105b-conversations")).strip()
-        self.timeout = timeout
-        self.tool_registry = tool_registry or ToolRegistry()
-        self.planner = TaskPlanner(tool_registry=self.tool_registry)
-        self.reasoner = reasoner or MultiPassReasoner(tool_registry=self.tool_registry)
-
-    def is_healthy(self) -> bool:
-        return bool(self.api_key and self.api_key != "your_sarvam_api_key_here")
-
-    def _execute_offline_intent(self, user_message: str) -> Optional[str]:
-        from brain.router import DirectModelRouter
-        router = DirectModelRouter(tool_registry=self.tool_registry)
-        return router._execute_offline_intent(user_message)
-
-    def process_message(
-        self,
-        user_message: str,
-        conversation_history: Optional[List[Dict[str, str]]] = None,
-        context: Optional[Dict[str, Any]] = None,
-    ) -> str:
-        if not user_message or not user_message.strip():
-            return "I didn't catch that. Please try again."
-
-        # Offline fallback if API key is not configured
-        if not self.is_healthy():
-            offline = self._execute_offline_intent(user_message)
-            if offline:
-                return offline
-            return "DAKU is running with Sarvam in offline demo mode. Set SARVAM_API_KEY in .env."
-
-        # Check multi-step planner
-        plan = self.planner.create_plan(user_message)
-        if len(plan.steps) > 1:
-            exec_res = self.planner.execute_plan(plan)
-            if exec_res.get("success"):
-                return exec_res.get("message", "Task completed.")
-
-        messages = [{"role": "system", "content": DAKU_SYSTEM_PROMPT}]
-        if conversation_history:
-            for turn in conversation_history[-6:]:
-                messages.append(turn)
-        messages.append({"role": "user", "content": user_message})
-
-        tools_payload = []
-        for schema in self.tool_registry.get_schemas():
-            tools_payload.append({"type": "function", "function": schema})
-
-        headers = {
-            "Content-Type": "application/json",
-            "api-subscription-key": self.api_key,
-            "Authorization": f"Bearer {self.api_key}",
-            "User-Agent": "DAKU-Sarvam-Agent/5.0",
-        }
-
-        payload: Dict[str, Any] = {
-            "model": self.model_name,
-            "messages": messages,
-            "temperature": 0.3,
-            "max_tokens": 200,
-        }
-        if tools_payload:
-            payload["tools"] = tools_payload
-
-        try:
-            req_data = json.dumps(payload).encode("utf-8")
-            req = urllib.request.Request(self.endpoint, data=req_data, headers=headers, method="POST")
-
-            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                if resp.status != 200:
-                    return f"Sarvam LLM returned status {resp.status}."
-                body = json.loads(resp.read().decode("utf-8"))
-                choice = body["choices"][0]["message"]
-
-                # Handle tool calls
-                if "tool_calls" in choice and choice["tool_calls"]:
-                    tool_call = choice["tool_calls"][0]
-                    func = tool_call.get("function", {})
-                    func_name = func.get("name", "")
-                    try:
-                        func_args = json.loads(func.get("arguments", "{}"))
-                    except Exception:
-                        func_args = {}
-
-                    tool_exec_result = self.tool_registry.execute_tool(func_name, func_args)
-                    if not (tool_exec_result.success and tool_exec_result.verified):
-                        reasoning_res = self.reasoner.reason_and_execute(
-                            user_query=user_message,
-                            initial_action=(func_name, func_args),
-                        )
-                        return reasoning_res.to_voice_summary()
-                    return tool_exec_result.to_voice_summary()
-
-                reply = choice.get("content", "").strip()
-                # Strip think tags if model generates reasoning tokens
-                clean_reply = re.sub(r"<think>.*?</think>", "", reply, flags=re.DOTALL).strip()
-                return clean_reply or "I processed your request."
-
-        except urllib.error.HTTPError as e:
-            if e.code == 401:
-                return "Authentication failed for Sarvam AI. Please check your SARVAM_API_KEY in .env."
-            elif e.code == 429:
-                return "Sarvam AI rate limit reached. Please try again in a few moments."
-            elif e.code >= 500:
-                return "The Sarvam AI cloud service is currently experiencing issues."
-            return f"Sarvam API request returned error code {e.code}."
-        except urllib.error.URLError:
-            offline = self._execute_offline_intent(user_message)
-            if offline:
-                return offline
-            return "Unable to connect to Sarvam AI. Running in offline fallback mode."
-        except TimeoutError:
-            return "The Sarvam AI service timed out. Please try again."
-        except Exception as e:
-            offline = self._execute_offline_intent(user_message)
-            if offline:
-                return offline
-            return f"Sarvam encountered an error: {str(e)}"
-
-
 class BackendFactory:
     """
     Factory for instantiating the configured AgentBackend:
     - 'direct' -> DirectModelBackend (DirectModelRouter)
     - 'harness' -> DeepSeekHarnessBackend
     - 'uncensored' -> UncensoredR1Backend
-    - 'sarvam' -> SarvamLLMBackend (optional conversational adapter)
     """
 
     @staticmethod
@@ -798,9 +653,7 @@ class BackendFactory:
         b_type = (backend_type or settings.AGENT_BACKEND or "direct").strip().lower()
         reg = tool_registry or ToolRegistry()
 
-        if b_type in ("sarvam", "sarvam_llm", "sarvam-llm", "sarvam-105b", "sarvam-conversations"):
-            return SarvamLLMBackend(tool_registry=reg, **kwargs)
-        elif b_type in ("harness", "deepseek_harness", "deepseek-harness"):
+        if b_type in ("harness", "deepseek_harness", "deepseek-harness"):
             return DeepSeekHarnessBackend(tool_registry=reg, **kwargs)
         elif b_type in ("uncensored", "uncensored_r1", "uncensored-r1", "r1"):
             return UncensoredR1Backend(tool_registry=reg, **kwargs)

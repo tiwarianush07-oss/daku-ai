@@ -22,7 +22,7 @@ logger = logging.getLogger("daku.voice.windows_tts")
 class WindowsSapiTTSProvider(TTSProvider):
     """
     Native Windows TTS provider implementing TTSProvider interface.
-    Serves as the zero-RAM, 100% offline fallback when Sarvam Bulbul is unavailable.
+    Serves as the zero-RAM, 100% offline native Windows TTS provider.
     """
 
     def __init__(self, voice_name: Optional[str] = None, rate: int = 0):

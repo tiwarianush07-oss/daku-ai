@@ -370,57 +370,19 @@ def check_api_auth() -> dict:
     return {"name": "API Authentication", "value": val, "status": status, "hint": hint}
 
 
-def check_sarvam_voice(verify_live: bool = True) -> dict:
-    """
-    Checks Sarvam AI voice agent provider configuration and live status.
-    States:
-      - STANDBY: No SARVAM_API_KEY configured (fallbacks active).
-      - LIVE VERIFIED: Key configured and real endpoint request succeeds.
-      - DEGRADED: Key configured but network/timeout occurred (fallbacks active).
-      - FAILED: Key configured but authentication error (401/403) returned.
-    """
-    from config.voice_config import voice_config
-    if not voice_config.has_sarvam_key():
-        return {
-            "name": "Sarvam Voice Agent",
-            "value": "STANDBY (Fallbacks Active: Google STT & Windows SAPI)",
-            "status": "INFO",
-            "hint": "Set SARVAM_API_KEY in .env to activate Sarvam AI provider",
-        }
-
-    # API key is configured; perform live verification probe
-    if verify_live:
-        try:
-            from voice.providers.sarvam_tts import SarvamTTSProvider
-            tts = SarvamTTSProvider(timeout=5.0)
-            res = tts.synthesize("DAKU", language="hi-IN")
-            if res and res.audio_base64:
-                val = f"LIVE VERIFIED (STT: {voice_config.SARVAM_STT_MODEL}, TTS: {voice_config.SARVAM_TTS_MODEL} [{voice_config.SARVAM_TTS_SPEAKER}], Lang: {voice_config.SARVAM_LANGUAGE})"
-                return {"name": "Sarvam Voice Agent", "value": val, "status": "OK", "hint": "Live Sarvam Saaras & Bulbul verified"}
-            return {
-                "name": "Sarvam Voice Agent",
-                "value": "DEGRADED (Synthesis returned empty payload; fallbacks active)",
-                "status": "WARN",
-                "hint": "Sarvam did not return audio; check provider quota or endpoint",
-            }
-        except Exception as e:
-            err_msg = str(e).lower()
-            if "401" in err_msg or "403" in err_msg or "unauthorized" in err_msg or "forbidden" in err_msg:
-                return {
-                    "name": "Sarvam Voice Agent",
-                    "value": "FAILED (Authentication Error: Invalid or expired SARVAM_API_KEY)",
-                    "status": "FAIL",
-                    "hint": "Check your SARVAM_API_KEY in .env or on dashboard.sarvam.ai",
-                }
-            return {
-                "name": "Sarvam Voice Agent",
-                "value": f"DEGRADED (Connection Error: {e})",
-                "status": "WARN",
-                "hint": "Network unreachable; falling back to Google STT & Windows SAPI",
-            }
-
-    val = f"CONFIGURED (STT: {voice_config.SARVAM_STT_MODEL}, TTS: {voice_config.SARVAM_TTS_MODEL} [{voice_config.SARVAM_TTS_SPEAKER}], Lang: {voice_config.SARVAM_LANGUAGE})"
-    return {"name": "Sarvam Voice Agent", "value": val, "status": "OK", "hint": "Sarvam Saaras & Bulbul active"}
+def check_voice_engine() -> dict:
+    """Checks voice pipeline status (Google STT & native Windows SAPI TTS)."""
+    try:
+        from voice.providers.google_stt import GoogleSTTProvider
+        from voice.providers.windows_tts import WindowsSapiTTSProvider
+        stt = GoogleSTTProvider()
+        tts = WindowsSapiTTSProvider()
+        stt_ok = stt.is_available()
+        tts_ok = tts.is_available()
+        val = f"STT: {'Google STT' if stt_ok else 'Text Fallback'}, TTS: {'Windows SAPI' if tts_ok else 'Console'}"
+        return {"name": "Voice Pipeline", "value": val, "status": "OK", "hint": "Lightweight native voice pipeline"}
+    except Exception as e:
+        return {"name": "Voice Pipeline", "value": f"Error: {e}", "status": "WARN", "hint": "Text fallback active"}
 
 
 def check_solar_hud() -> dict:
@@ -435,12 +397,12 @@ def check_solar_hud() -> dict:
     leaks = []
     for f in files:
         content = (hud_dir / f).read_text(encoding="utf-8", errors="ignore")
-        if settings.SARVAM_API_KEY and settings.SARVAM_API_KEY in content:
+        if settings.MODEL_API_KEY and settings.MODEL_API_KEY in content:
             leaks.append(f)
         if "sk_" in content:
             leaks.append(f)
     if leaks:
-        return {"name": "Solar Swarm HUD", "value": f"SECURITY LEAK in {', '.join(leaks)}", "status": "FAIL", "hint": "Never expose SARVAM_API_KEY to browser JavaScript"}
+        return {"name": "Solar Swarm HUD", "value": f"SECURITY LEAK in {', '.join(leaks)}", "status": "FAIL", "hint": "Never expose API keys to browser JavaScript"}
 
     return {"name": "Solar Swarm HUD", "value": "READY (Central Sun + 4 Planetary Swarm Agents)", "status": "OK", "hint": "Available at /hud"}
 
@@ -468,7 +430,7 @@ def run_doctor(remote_mode: bool = False, server_url: Optional[str] = None) -> b
         check_no_local_model(),
         check_internet(),
         check_config(),
-        check_sarvam_voice(),
+        check_voice_engine(),
         check_api_auth(),
         check_solar_hud(),
     ]

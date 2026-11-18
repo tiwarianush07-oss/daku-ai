@@ -160,22 +160,19 @@ Client Connection Probe (4s timeout)
 
 ---
 
-## 5. Pluggable Voice Architecture & Sarvam AI Integration
+## 5. Lightweight Voice Architecture & Multi-Tier Fallback
 
-For full details, see [docs/SARVAM_VOICE_AGENT.md](file:///c:/Users/anush07/Desktop/win10/DAKU/docs/SARVAM_VOICE_AGENT.md).
-
-DAKU integrates Sarvam AI as an interchangeable, production-grade Indian-language voice provider:
+DAKU features a zero-bloat, highly resilient native voice pipeline:
 
 1. **Speech-To-Text (STT)**:
-   - Primary: Sarvam Saaras (`saaras:v4`) supporting 22 Indic languages + Global/Indian English.
-   - Automatic fallback to Google Web Speech API (`GoogleSTTProvider`), then to local text console.
+   - Primary: Google Web Speech API (`GoogleSTTProvider`) with zero local neural RAM consumption.
+   - Automatic fallback to local text console (`TextFallbackSTT`), guaranteeing operation without microphones or audio drivers.
 
 2. **Text-To-Speech (TTS)**:
-   - Primary: Sarvam Bulbul v3 (`bulbul:v3`) supporting 30+ voices (`shubh`, `aditya`, etc.).
-   - `TTSNormalizer` cleans model responses (Indic script preservation, number/URL expansion, `<think>` tag and JSON stripping).
-   - Automatic fallback to Windows Native SAPI (`WindowsSapiTTSProvider`, 0 MB RAM), then to console text.
+   - Primary: Windows Native SAPI (`WindowsSapiTTSProvider`, 0 MB added RAM, 100% offline).
+   - `TTSNormalizer` cleans model responses (script preservation, technical term retention, number/URL expansion, `<think>` tag and JSON stripping).
+   - Automatic fallback to console text print.
 
-3. **Credential & Boundary Security**:
-   - `SARVAM_API_KEY` remains strictly server-side / environment-based.
-   - Client-server architecture delegates STT/TTS to remote server gateway endpoints (`/api/voice/transcribe`, `/api/voice/synthesize`), keeping the Windows client credential-free.
-   - 3-tier permissions (`SAFE`, `CONFIRMATION_REQUIRED`, `BLOCKED`) remain strictly enforced before executing any tool.
+3. **Security & Boundary Isolation**:
+   - Client-server architecture keeps Windows client credential-free when communicating with remote servers.
+   - 3-tier permissions (`SAFE`, `CONFIRMATION_REQUIRED`, `BLOCKED`) remain strictly enforced before executing any tool regardless of voice state.

@@ -112,7 +112,6 @@ class TestDesktopHUD(unittest.TestCase):
                 {"id": "vision", "name": "Vision Analyst", "status": "IDLE"},
                 {"id": "strategist", "name": "Executive Strategist", "status": "IDLE"},
             ],
-            "sarvam_available": True,
         }
         state = self.mock_client._process_success_payload(payload, 2000.0)
         self.assertEqual(state["sun"]["model"], "deepseek-chat")

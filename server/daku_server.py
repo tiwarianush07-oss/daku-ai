@@ -440,15 +440,14 @@ class DakuRequestHandler(BaseHTTPRequestHandler):
     def _handle_voice_transcribe(self) -> None:
         """
         POST /api/voice/transcribe
-        Transcribes uploaded audio via server-side Sarvam STT (with Google STT fallback).
-        Keeps Sarvam API key strictly server-side.
+        Transcribes uploaded audio via server-side Google STT.
         """
         body = self._read_json_body()
         if body is None:
             return
 
         audio_b64 = body.get("audio_base64", "").strip()
-        language = body.get("language", settings.SARVAM_LANGUAGE)
+        language = body.get("language", "en-IN")
         if not audio_b64:
             self._send_json_response(
                 HTTPStatus.BAD_REQUEST,
@@ -465,23 +464,14 @@ class DakuRequestHandler(BaseHTTPRequestHandler):
             )
             return
 
-        from voice.providers.sarvam_stt import SarvamSTTProvider
         from voice.providers.google_stt import GoogleSTTProvider
 
-        sarvam_stt = SarvamSTTProvider()
         google_stt = GoogleSTTProvider()
         transcript = None
         provider_used = "none"
         latency_ms = 0.0
 
-        if sarvam_stt.is_available():
-            res = sarvam_stt.transcribe(audio_bytes, language=language)
-            if res and res.text:
-                transcript = res.text
-                provider_used = "sarvam"
-                latency_ms = res.latency_ms
-
-        if not transcript and google_stt.is_available():
+        if google_stt.is_available():
             res = google_stt.transcribe(audio_bytes, language=language)
             if res and res.text:
                 transcript = res.text
@@ -501,16 +491,14 @@ class DakuRequestHandler(BaseHTTPRequestHandler):
     def _handle_voice_synthesize(self) -> None:
         """
         POST /api/voice/synthesize
-        Synthesizes text via server-side Sarvam Bulbul v3 TTS.
-        Keeps Sarvam API key strictly server-side.
+        Handles speech synthesis request via Windows SAPI TTS or fallback.
         """
         body = self._read_json_body()
         if body is None:
             return
 
         text = body.get("text", "").strip()
-        language = body.get("language", settings.SARVAM_LANGUAGE)
-        speaker = body.get("speaker", settings.SARVAM_TTS_SPEAKER)
+        language = body.get("language", "en-IN")
 
         if not text:
             self._send_json_response(
@@ -520,37 +508,31 @@ class DakuRequestHandler(BaseHTTPRequestHandler):
             return
 
         from voice_agent.normalizer import TTSNormalizer
-        from voice.providers.sarvam_tts import SarvamTTSProvider
-
         clean_text = TTSNormalizer.clean_for_speech(text, target_lang=language)
-        sarvam_tts = SarvamTTSProvider()
 
-        if sarvam_tts.is_available():
-            res = sarvam_tts.synthesize(clean_text, language=language, speaker=speaker)
-            if res and res.audio_base64:
-                self._send_json_response(
-                    HTTPStatus.OK,
-                    {
-                        "success": True,
-                        "audio_base64": res.audio_base64,
-                        "format": res.format,
-                        "sample_rate": res.sample_rate,
-                        "provider": "sarvam",
-                        "model": res.model,
-                        "speaker": res.speaker,
-                        "latency_ms": round(res.latency_ms, 2),
-                    },
-                )
-                return
+        from voice.providers.windows_tts import WindowsSapiTTSProvider
+        win_tts = WindowsSapiTTSProvider()
 
-        # If Sarvam TTS unavailable or synthesis failed on server
+        if win_tts.is_available():
+            spoken = win_tts.speak(clean_text)
+            self._send_json_response(
+                HTTPStatus.OK,
+                {
+                    "success": spoken,
+                    "audio_base64": "",
+                    "provider": "windows_sapi",
+                    "message": "Synthesized via Windows SAPI.",
+                },
+            )
+            return
+
         self._send_json_response(
             HTTPStatus.OK,
             {
                 "success": False,
                 "audio_base64": "",
                 "provider": "none",
-                "message": "Sarvam TTS unavailable on server; client should use local TTS fallback.",
+                "message": "Server-side TTS unavailable; client should use local TTS fallback.",
             },
         )
 
@@ -561,7 +543,6 @@ class DakuRequestHandler(BaseHTTPRequestHandler):
         4 visual agents + Central Sun (DAKU Brain).
         """
         tools_list = self.server_instance.brain.tool_registry.list_tool_names()
-        sarvam_active = settings.has_sarvam_key()
         backend = getattr(self.server_instance.brain, "backend", None)
         harness_telemetry = {}
         if backend and hasattr(backend, "get_telemetry"):
@@ -572,9 +553,8 @@ class DakuRequestHandler(BaseHTTPRequestHandler):
 
         data = {
             "version": SERVER_VERSION,
-            "stt_provider": "Sarvam Saaras" if sarvam_active else "Google STT / Text Fallback",
-            "tts_provider": "Sarvam Bulbul" if sarvam_active else "Windows SAPI / Audio Fallback",
-            "sarvam_available": sarvam_active,
+            "stt_provider": "Google STT / Text Fallback",
+            "tts_provider": "Windows SAPI / Audio Fallback",
             "sun": {
                 "id": "brain",
                 "name": "DAKU Central Brain",
@@ -698,11 +678,11 @@ class DakuRequestHandler(BaseHTTPRequestHandler):
         POST /api/hud/turn
         Processes a voice or text turn through DAKU VoiceSession and Brain.
         Executes:
-        Audio (base64) / Text -> STT (Sarvam Saaras -> Google STT fallback)
+        Audio (base64) / Text -> STT (Google STT with fallback)
         -> Central DAKU Brain (MultiPassReasoner / Intent / Router)
         -> 3-Tier Permission Check
         -> Tool Execution (if authorized)
-        -> TTS (Sarvam Bulbul -> Windows SAPI fallback)
+        -> TTS (Windows SAPI fallback)
         -> Telemetry & Audio Response.
         """
         body = self._read_json_body()
@@ -711,7 +691,7 @@ class DakuRequestHandler(BaseHTTPRequestHandler):
 
         text_input = body.get("text", "").strip()
         audio_b64 = body.get("audio_base64", "").strip()
-        language = body.get("language", settings.SARVAM_LANGUAGE)
+        language = body.get("language", "en-IN")
 
         if not text_input and not audio_b64:
             self._send_json_response(
@@ -736,21 +716,11 @@ class DakuRequestHandler(BaseHTTPRequestHandler):
                 )
                 return
 
-            from voice.providers.sarvam_stt import SarvamSTTProvider
             from voice.providers.google_stt import GoogleSTTProvider
 
-            sarvam_stt = SarvamSTTProvider()
             google_stt = GoogleSTTProvider()
 
-            if sarvam_stt.is_available():
-                t0 = time.perf_counter()
-                res = sarvam_stt.transcribe(audio_bytes, language=language)
-                if res and res.text:
-                    transcript = res.text
-                    stt_provider_used = "sarvam"
-                    stt_latency_ms = (time.perf_counter() - t0) * 1000.0
-
-            if not transcript and google_stt.is_available():
+            if google_stt.is_available():
                 t0 = time.perf_counter()
                 res = google_stt.transcribe(audio_bytes, language=language)
                 if res and res.text:
@@ -798,27 +768,18 @@ class DakuRequestHandler(BaseHTTPRequestHandler):
         tts_latency_ms = 0.0
 
         if response_text:
-            from voice.providers.sarvam_tts import SarvamTTSProvider
+            from voice.providers.windows_tts import WindowsSapiTTSProvider
             from voice_agent.normalizer import TTSNormalizer
 
             clean_text = TTSNormalizer.clean_for_speech(response_text, target_lang=language)
-            sarvam_tts = SarvamTTSProvider()
+            win_tts = WindowsSapiTTSProvider()
 
-            if sarvam_tts.is_available():
+            if win_tts.is_available():
                 t0 = time.perf_counter()
-                res = sarvam_tts.synthesize(clean_text, language=language)
-                if res and res.audio_base64:
-                    tts_audio_b64 = res.audio_base64
-                    tts_provider_used = "sarvam"
-                    tts_latency_ms = (time.perf_counter() - t0) * 1000.0
-
-            if not tts_audio_b64:
-                from voice.providers.windows_tts import WindowsSapiTTSProvider
-                win_tts = WindowsSapiTTSProvider()
-                if win_tts.is_available():
-                    tts_provider_used = "windows_sapi"
-                else:
-                    tts_provider_used = "text_fallback"
+                tts_provider_used = "windows_sapi"
+                tts_latency_ms = (time.perf_counter() - t0) * 1000.0
+            else:
+                tts_provider_used = "text_fallback"
 
         total_elapsed = round(time.perf_counter() - start_t, 3)
 

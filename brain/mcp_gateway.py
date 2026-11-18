@@ -49,7 +49,6 @@ SAFE_SYSTEM_ENV_VARS: Set[str] = {
 # Core secrets strictly prohibited from ever leaking to external MCP subprocesses
 STRICT_FORBIDDEN_ENV_KEYS: Set[str] = {
     "MODEL_API_KEY",
-    "SARVAM_API_KEY",
     "DAKU_AUTH_TOKEN",
     "DEEPSEEK_API_KEY",
     "OPENAI_API_KEY",
@@ -276,7 +275,7 @@ class MCPPermissionGateway:
         """
         Token Isolation Boundary:
         Scrubs environment variables before passing them to child MCP processes.
-        Strictly prohibits MODEL_API_KEY, SARVAM_API_KEY, DAKU_AUTH_TOKEN, and other
+        Strictly prohibits MODEL_API_KEY, DAKU_AUTH_TOKEN, and other
         sensitive secrets unless explicitly allowlisted in that server's ACL.
         Core DAKU authentication tokens are NEVER allowed to pass.
         """

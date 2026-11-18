@@ -1,10 +1,11 @@
 """
 Unit and Integration Tests for Voice Fallback Cascades & Security Policy
 Tests:
-1. Sarvam STT failure -> Google STT fallback -> Text console fallback.
-2. Sarvam TTS failure -> Windows SAPI fallback -> Text output fallback.
-3. Security verification:
-   - Zero API key leakage in logs or exceptions.
+1. Google STT success and failure handling.
+2. Windows SAPI TTS primary execution.
+3. Fallback to console text output when Windows SAPI is unavailable.
+4. Security verification:
+   - Zero secret leakage in logs or exceptions.
    - Dangerous tool operations strictly require confirmation even during voice failures.
    - Provider failure NEVER bypasses PermissionManager.
 """
@@ -31,49 +32,53 @@ class TestVoiceFallbackAndSecurity(unittest.TestCase):
     def setUp(self):
         self.sample_wav = b"RIFF$\x00\x00\x00WAVEfmt \x10\x00\x00\x00\x01\x00\x01\x00\x80>\x00\x00\x00}\x00\x00\x02\x00\x10\x00data\x00\x00\x00\x00"
 
-    def test_stt_fallback_sarvam_down_to_google(self):
-        """Verifies automatic fallback to Google STT when Sarvam returns None or fails."""
+    def test_stt_google_success(self):
+        """Verifies transcription via Google STT when available."""
         pipeline = VoicePipeline()
 
-        # Simulate Sarvam failing
-        with patch.object(pipeline.sarvam_stt, "is_available", return_value=True):
-            with patch.object(pipeline.sarvam_stt, "transcribe", return_value=None):
-                # Simulate Google STT succeeding
-                google_res = STTResult(
-                    text="fallback to google",
-                    provider="google_stt",
-                    model="google-web",
-                    latency_ms=85.0,
-                )
-                with patch.object(pipeline.google_stt, "is_available", return_value=True):
-                    with patch.object(pipeline.google_stt, "transcribe", return_value=google_res):
-                        text, provider_used, latency, fallback = pipeline.transcribe_audio(self.sample_wav)
+        google_res = STTResult(
+            text="hello daku",
+            provider="google_stt",
+            model="google-web",
+            latency_ms=85.0,
+        )
+        with patch.object(pipeline.google_stt, "is_available", return_value=True):
+            with patch.object(pipeline.google_stt, "transcribe", return_value=google_res):
+                text, provider_used, latency, fallback = pipeline.transcribe_audio(self.sample_wav)
 
-        self.assertEqual(text, "fallback to google")
+        self.assertEqual(text, "hello daku")
         self.assertEqual(provider_used, "google_stt")
-        self.assertTrue(fallback)
+        self.assertFalse(fallback)
 
-    def test_tts_fallback_sarvam_down_to_windows_sapi(self):
-        """Verifies automatic fallback to Windows SAPI when Sarvam TTS fails."""
+    def test_stt_failure_returns_none(self):
+        """Verifies STT failure returns None when Google STT fails."""
         pipeline = VoicePipeline()
 
-        with patch.object(pipeline.sarvam_tts, "is_available", return_value=True):
-            with patch.object(pipeline.sarvam_tts, "synthesize", return_value=None):
-                with patch.object(pipeline.windows_tts, "is_available", return_value=True):
-                    with patch.object(pipeline.windows_tts, "speak", return_value=True):
-                        ok, provider_used, latency, fallback = pipeline.synthesize_and_play("Hello")
+        with patch.object(pipeline.google_stt, "is_available", return_value=True):
+            with patch.object(pipeline.google_stt, "transcribe", return_value=None):
+                text, provider_used, latency, fallback = pipeline.transcribe_audio(self.sample_wav)
+
+        self.assertIsNone(text)
+        self.assertEqual(provider_used, "none")
+
+    def test_tts_windows_sapi_primary(self):
+        """Verifies speech synthesis via Windows SAPI."""
+        pipeline = VoicePipeline()
+
+        with patch.object(pipeline.windows_tts, "is_available", return_value=True):
+            with patch.object(pipeline.windows_tts, "speak", return_value=True):
+                ok, provider_used, latency, fallback = pipeline.synthesize_and_play("Hello")
 
         self.assertTrue(ok)
         self.assertEqual(provider_used, "windows_sapi")
-        self.assertTrue(fallback)
+        self.assertFalse(fallback)
 
-    def test_tts_double_fallback_to_text(self):
-        """Verifies fallback to text print when both Sarvam and Windows SAPI fail."""
+    def test_tts_fallback_to_text(self):
+        """Verifies fallback to text print when Windows SAPI fails or is unavailable."""
         pipeline = VoicePipeline()
 
-        with patch.object(pipeline.sarvam_tts, "is_available", return_value=False):
-            with patch.object(pipeline.windows_tts, "is_available", return_value=False):
-                ok, provider_used, latency, fallback = pipeline.synthesize_and_play("Console message")
+        with patch.object(pipeline.windows_tts, "is_available", return_value=False):
+            ok, provider_used, latency, fallback = pipeline.synthesize_and_play("Console message")
 
         self.assertTrue(ok)
         self.assertEqual(provider_used, "text_fallback")
@@ -81,11 +86,11 @@ class TestVoiceFallbackAndSecurity(unittest.TestCase):
 
     def test_secret_never_appears_in_logs(self):
         """Security: Verifies API keys are masked and never appear in logs or safe dicts."""
-        secret_key = "sarvam_super_secret_production_key_12345"
+        secret_key = "daku_super_secret_production_key_12345"
         masked = _mask_secret(secret_key)
 
         self.assertNotIn("super_secret", masked)
-        self.assertEqual(masked[:3], "sar")
+        self.assertEqual(masked[:3], "dak")
         self.assertEqual(masked[-3:], "345")
         self.assertIn("...", masked)
 

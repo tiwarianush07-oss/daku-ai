@@ -18,6 +18,9 @@ __pycache__/
 htmlcov/
 
 # Local Databases, Logs & Ephemeral Data
+*.db
+*.sqlite
+*.sqlite3
 data/*.db
 data/*.db-wal
 data/*.db-shm
@@ -29,9 +32,13 @@ new_file.txt
 .env
 .env.*
 !.env.example
-secrets/
+mcp_config.json
+*secret*
+*token*
+*key*
 *.pem
-*.key
+*.pfx
+secrets/
 
 # OS Artifacts
 desktop.ini

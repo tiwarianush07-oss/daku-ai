@@ -75,7 +75,6 @@ class HUDTelemetryClient:
             "active_plugins": [],
         }
         self.agents_data: List[Dict[str, Any]] = []
-        self.sarvam_available: bool = False
         self.confirmation_pending: Optional[Dict[str, Any]] = None
 
     @property
@@ -144,7 +143,6 @@ class HUDTelemetryClient:
             sun = data.get("sun", {})
             self.sun_data = sun
             self.agents_data = data.get("agents", [])
-            self.sarvam_available = bool(data.get("sarvam_available", False))
 
             # Determine composite HUD state
             server_sun_status = sun.get("status", "ONLINE").upper()
@@ -223,7 +221,6 @@ class HUDTelemetryClient:
             "last_poll_time": self.last_poll_time,
             "sun": dict(self.sun_data),
             "agents": list(self.agents_data),
-            "sarvam_available": self.sarvam_available,
             "confirmation_pending": dict(self.confirmation_pending) if self.confirmation_pending else None,
             "pass_count": self.sun_data.get("pass_count", 0),
             "session_id": self.sun_data.get("session_id", ""),

@@ -29,7 +29,7 @@ class TestMCPGateway(unittest.TestCase):
             "default_policy": "CONFIRMATION_REQUIRED",
             "forbidden_env_keys": [
                 "MODEL_API_KEY",
-                "SARVAM_API_KEY",
+                "DEEPSEEK_API_KEY",
                 "DAKU_AUTH_TOKEN",
                 "SECRET_KEY",
             ],
@@ -120,7 +120,7 @@ class TestMCPGateway(unittest.TestCase):
         raw_env = {
             "PATH": "/usr/bin;C:\\Windows",
             "MODEL_API_KEY": "sk-deepseek-topsecret-999",
-            "SARVAM_API_KEY": "sarvam-live-token-123",
+            "DEEPSEEK_API_KEY": "deepseek-live-token-123",
             "DAKU_AUTH_TOKEN": "daku-master-auth-xyz",
             "SAFE_PUBLIC_CONFIG": "allowlisted_value",
             "CUSTOM_ALLOWED_VAR": "custom_val",
@@ -130,7 +130,7 @@ class TestMCPGateway(unittest.TestCase):
         # For safe_server (SAFE_PUBLIC_CONFIG & CUSTOM_ALLOWED_VAR allowed, PATH is harmless system)
         scrubbed = self.gateway.scrub_environment("safe_server", raw_env)
         self.assertNotIn("MODEL_API_KEY", scrubbed)
-        self.assertNotIn("SARVAM_API_KEY", scrubbed)
+        self.assertNotIn("DEEPSEEK_API_KEY", scrubbed)
         self.assertNotIn("DAKU_AUTH_TOKEN", scrubbed)
         self.assertNotIn("RANDOM_UNSAFE_VAR", scrubbed)
         self.assertEqual(scrubbed.get("PATH"), "/usr/bin;C:\\Windows")
@@ -140,7 +140,7 @@ class TestMCPGateway(unittest.TestCase):
         # For strict_server (no allowed keys)
         scrubbed_strict = self.gateway.scrub_environment("strict_server", raw_env)
         self.assertNotIn("MODEL_API_KEY", scrubbed_strict)
-        self.assertNotIn("SARVAM_API_KEY", scrubbed_strict)
+        self.assertNotIn("DEEPSEEK_API_KEY", scrubbed_strict)
         self.assertNotIn("DAKU_AUTH_TOKEN", scrubbed_strict)
         self.assertNotIn("SAFE_PUBLIC_CONFIG", scrubbed_strict)
         self.assertEqual(scrubbed_strict.get("PATH"), "/usr/bin;C:\\Windows")

@@ -97,30 +97,20 @@ class TestVoicePipeline(unittest.TestCase):
         mock_stt_res = STTResult(
             text="what time is it",
             language="en-IN",
-            provider="sarvam",
-            model="saaras:v4",
+            provider="google_stt",
+            model="google-web",
             latency_ms=120.0,
         )
-        # Mock TTS
-        mock_tts_res = TTSResult(
-            audio_bytes=b"dummy-audio",
-            audio_base64="ZHVtbXktYXVkaW8=",
-            provider="sarvam",
-            model="bulbul:v3",
-            speaker="shubh",
-            latency_ms=150.0,
-        )
 
-        with patch.object(pipeline.sarvam_stt, "is_available", return_value=True):
-            with patch.object(pipeline.sarvam_stt, "transcribe", return_value=mock_stt_res):
-                with patch.object(pipeline.sarvam_tts, "is_available", return_value=True):
-                    with patch.object(pipeline.sarvam_tts, "synthesize", return_value=mock_tts_res):
-                        with patch("voice_agent.pipeline.play_audio_bytes", return_value=True):
-                            metrics = pipeline.process_turn(audio_input=self.sample_wav)
+        with patch.object(pipeline.google_stt, "is_available", return_value=True):
+            with patch.object(pipeline.google_stt, "transcribe", return_value=mock_stt_res):
+                with patch.object(pipeline.windows_tts, "is_available", return_value=True):
+                    with patch.object(pipeline.windows_tts, "speak", return_value=True):
+                        metrics = pipeline.process_turn(audio_input=self.sample_wav)
 
         self.assertTrue(metrics.success)
-        self.assertEqual(metrics.stt_provider, "sarvam")
-        self.assertEqual(metrics.tts_provider, "sarvam")
+        self.assertEqual(metrics.stt_provider, "google_stt")
+        self.assertEqual(metrics.tts_provider, "windows_sapi")
         self.assertGreater(metrics.total_turn_latency_ms, 0.0)
         self.assertGreater(metrics.brain_latency_ms, 0.0)
 

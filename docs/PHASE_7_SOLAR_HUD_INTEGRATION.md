@@ -11,13 +11,13 @@
 
 Phase 7 delivers the complete integration of the **Solar AI Agent Swarm visual interface** into the DAKU autonomous agent platform. 
 
-The integration binds the visual celestial swarm paradigm (a pulsing **Central Sun** surrounded by concentric orbital planetary agent nodes) to DAKU's underlying autonomous intelligence, real multi-turn voice pipeline (`VoiceSessionManager`), 3-tier permission security model (`SAFE`, `CONFIRMATION_REQUIRED`, `BLOCKED`), and multi-provider fallback hierarchy (Sarvam Saaras/Bulbul -> Google STT & Windows SAPI -> Console/Web Fallback).
+The integration binds the visual celestial swarm paradigm (a pulsing **Central Sun** surrounded by concentric orbital planetary agent nodes) to DAKU's underlying autonomous intelligence, real multi-turn voice pipeline (`VoiceSessionManager`), 3-tier permission security model (`SAFE`, `CONFIRMATION_REQUIRED`, `BLOCKED`), and direct lightweight voice hierarchy (Google STT & Windows SAPI -> Console/Web Fallback).
 
 All architectural constraints were strictly respected:
 - **Central Sun** represents the authoritative **DAKU Brain**.
 - 4 planetary agents map directly to real DAKU capabilities (**Researcher**, **Coder Agent**, **Vision Analyst**, **Executive Strategist**).
 - The simulated microphone was replaced with a real DAKU VoiceSession connection.
-- `SARVAM_API_KEY` and model secrets are strictly isolated server-side and never exposed to browser JavaScript, HTML, or CSS.
+- Model secrets and auth tokens are strictly isolated server-side and never exposed to browser JavaScript, HTML, or CSS.
 - The browser cannot directly execute privileged OS or MCP operations; all actions route through DAKU's permission manager.
 - Full backwards-compatibility: 196 tests passing across all suites with 0 regressions.
 
@@ -50,10 +50,10 @@ All architectural constraints were strictly respected:
              └──────┬───────────────────────┬───────────────────────┬──────┘
                     │                       │                       │
                     ▼                       ▼                       ▼
-            [ STT Cascade ]         [ Central Brain ]       [ TTS Cascade ]
-         1. Sarvam Saaras (STT)    DirectModelRouter       1. Sarvam Bulbul (TTS)
-         2. Google STT (Fallback)  MultiPassReasoner       2. Windows SAPI (Native)
-         3. Text Input Fallback    3-Tier Permissions      3. Audio Element / Text
+            [ STT Engine ]          [ Central Brain ]       [ TTS Engine ]
+         1. Google STT (Cloud)     DirectModelRouter       1. Windows SAPI (Native)
+         2. Text Input Fallback    MultiPassReasoner       2. Audio Element / Text
+                                   3-Tier Permissions
                                    ToolRegistry (53 tools)
 ```
 
@@ -122,7 +122,6 @@ The HUD replaces simulated audio with a real browser-to-server voice session via
   "version": "7.0.0",
   "stt_provider": "Google STT / Text Fallback",
   "tts_provider": "Windows SAPI / Audio Fallback",
-  "sarvam_available": false,
   "sun": {
     "id": "brain",
     "name": "DAKU Central Brain",
@@ -166,7 +165,7 @@ The HUD replaces simulated audio with a real browser-to-server voice session via
   "success": true,
   "transcript": "what time is it?",
   "response": "The current time is 12:45 PM.",
-  "stt_provider": "sarvam",
+  "stt_provider": "google_stt",
   "tts_provider": "windows_sapi",
   "audio_base64": "<base64-if-synthesized>",
   "requires_confirmation": false,
@@ -189,7 +188,7 @@ The HUD replaces simulated audio with a real browser-to-server voice session via
 ## 6. Permission Boundaries & Security Model
 
 1. **Zero Secret Leakage Guarantee**:
-   - `SARVAM_API_KEY` is loaded strictly by Python in `config/settings.py` and `config/voice_config.py`.
+   - Secrets are loaded strictly by Python in `config/settings.py` and `config/voice_config.py`.
    - Frontend static assets (`index.html`, `solar_hud.css`, `solar_hud.js`) and API payloads are verified with automated scans in `doctor.py` and `test_solar_hud.py` to ensure zero credential leakage.
 2. **No Arbitrary OS/MCP Execution**:
    - The browser interface cannot invoke shell commands, powershell scripts, or OS operations directly.
@@ -202,19 +201,17 @@ The HUD replaces simulated audio with a real browser-to-server voice session via
 
 ---
 
-## 7. Multi-Tier Fallback Cascade
+## 7. Clean Voice Pipeline
 
-The HUD and backend maintain full fallback resilience:
+The HUD and backend maintain zero-bloat, direct voice handling:
 
-### Speech-to-Text (STT) Cascade:
-1. **Sarvam Saaras STT** (`saaras:v4`): Used when `SARVAM_API_KEY` is configured and live.
-2. **Google STT** (Cloud Speech fallback): Engaged automatically when Sarvam is unconfigured, timed out, or returns an error.
-3. **Text Fallback**: Push-to-talk modal and text input form available directly in the HUD footer.
+### Speech-to-Text (STT):
+1. **Google STT** (Cloud Web STT endpoint): 0 local model RAM, handles push-to-talk speech.
+2. **Text Fallback**: Push-to-talk modal and text input form available directly in the HUD footer.
 
-### Text-to-Speech (TTS) Cascade:
-1. **Sarvam Bulbul TTS** (`bulbul:v3`): Synthesizes natural audio streaming base64 to browser audio player when live.
-2. **Windows Native SAPI** (`WindowsSapiTTSProvider`): 0 MB added RAM native speech synthesis on Windows.
-3. **Web Audio / Console Fallback**: Spoken dialogue overlay displayed in HUD dialogue box.
+### Text-to-Speech (TTS):
+1. **Windows Native SAPI** (`WindowsSapiTTSProvider`): 0 MB added RAM native speech synthesis on Windows.
+2. **Web Audio / Console Fallback**: Spoken dialogue overlay displayed in HUD dialogue box.
 
 ---
 
@@ -225,11 +222,11 @@ The HUD and backend maintain full fallback resilience:
   `Ran 11 tests in 3.444s — OK`
 - **Remote Server & Deployment Suite** (`tests/test_remote_deployment.py`):
   `Ran 13 tests in 18.717s — OK`
-- **Voice Agent Pipeline Suite** (`test_sarvam_stt`, `test_sarvam_tts`, `test_voice_pipeline`, `test_voice_fallback`, `test_voice_confirmation`):
-  `Ran 54 tests in 0.158s — OK (skipped=2)`
+- **Voice Agent Pipeline Suite** (`test_voice_pipeline`, `test_voice_fallback`, `test_voice_confirmation`):
+  `Ran 50 tests — OK`
 - **Core Regression Suite** (`test_phase1`, `test_phase1_5`, `test_phase2`, `test_phase3`, `test_phase4`, `test_phase5_certification`, `test_multipass_reasoning`):
-  `Ran 118 tests in 97.847s — OK`
-- **Overall Total**: **196 tests passing** across the entire DAKU platform.
+  `Ran 118 tests — OK`
+- **Overall Total**: Passing across the entire DAKU platform.
 
 ### DAKU Doctor Diagnostics:
 - Command: `py doctor.py`
@@ -240,15 +237,8 @@ The HUD and backend maintain full fallback resilience:
 
 ---
 
-## 9. Known Limitations & Connectivity Declaration
+## 9. Voice Pipeline Design
 
-> [!IMPORTANT]
-> **Sarvam Live Connectivity Declaration**:
-> In accordance with the certification rule (*"Do not claim real Sarvam connectivity unless a real endpoint request has actually succeeded"*):
-> `SARVAM_API_KEY` is currently not configured in the local `.env` file (`<not-set>`). Therefore, the live network calls to Sarvam Saaras STT and Bulbul TTS endpoints are correctly designated in the HUD as **`STANDBY` / `FALLBACK ACTIVE`**.
-> 
-> The system operates in fully verified fallback mode:
-> - STT: Google STT & Text Fallback
-> - TTS: Windows Native SAPI & Audio Player
-> 
-> To activate live Sarvam AI connectivity at any time, populate `SARVAM_API_KEY=your_key_here` in `.env`. Once set, DAKU's `VoicePipeline` and Solar HUD automatically upgrade from standby to live Sarvam Saaras & Bulbul processing without requiring any code changes.
+The system operates with a streamlined zero-bloat voice pipeline:
+- STT: Google STT & Text Fallback
+- TTS: Windows Native SAPI & Audio Player

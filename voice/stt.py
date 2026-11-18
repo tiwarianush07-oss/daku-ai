@@ -118,31 +118,7 @@ class SpeechToTextEngine:
 
     def listen(self, prompt_text: str = "Listening...") -> Optional[str]:
         """Captures input via active provider, automatically falling back to text console if needed."""
-        if self.provider in ("sarvam", "saaras"):
-            try:
-                from voice.providers.sarvam_stt import SarvamSTTProvider
-                sarvam = SarvamSTTProvider(language=self.language)
-                if sarvam.is_available():
-                    from voice.audio import capture_mic_audio
-                    audio_bytes = capture_mic_audio()
-                    if audio_bytes:
-                        res = sarvam.transcribe(audio_bytes, language=self.language)
-                        if res and res.text:
-                            print(f"You (Sarvam Voice): {res.text}")
-                            return res.text
-            except Exception:
-                pass
-
-            # Fall back to Google STT
-            if self.mic_stt.is_available():
-                result = self.mic_stt.listen_and_transcribe(prompt_text)
-                if result:
-                    return result
-
-            print("[DAKU] Voice input unavailable. Type your command instead.")
-            return self.text_fallback.listen_and_transcribe(prompt_text="Enter your command")
-
-        if self.provider in ("mic", "cloud_stt"):
+        if self.provider in ("mic", "cloud_stt", "google", "google_stt"):
             if not self.mic_stt.is_available():
                 print("[DAKU] Voice input unavailable. Type your command instead.")
                 return self.text_fallback.listen_and_transcribe(prompt_text="Enter your command")

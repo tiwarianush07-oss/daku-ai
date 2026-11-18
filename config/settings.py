@@ -59,23 +59,11 @@ class Settings:
         self.UNCENSORED_MODEL_NAME: str = os.getenv("UNCENSORED_MODEL_NAME", "deepseek-r1-distill-7b")
 
         # Voice settings
-        self.STT_PROVIDER: str = os.getenv("STT_PROVIDER", os.getenv("DAKU_STT_PROVIDER", "mic"))  # mic | sarvam | cloud_stt | text_fallback
+        self.STT_PROVIDER: str = os.getenv("STT_PROVIDER", os.getenv("DAKU_STT_PROVIDER", "google_stt"))  # google_stt | mic | text_fallback
         self.STT_LANGUAGE: str = os.getenv("STT_LANGUAGE", "en-IN")
-        self.TTS_PROVIDER: str = os.getenv("TTS_PROVIDER", os.getenv("DAKU_TTS_PROVIDER", "windows_native"))  # windows_native | sarvam | edge_tts
+        self.TTS_PROVIDER: str = os.getenv("TTS_PROVIDER", os.getenv("DAKU_TTS_PROVIDER", "windows_native"))  # windows_native | windows_sapi | text_fallback
         self.TTS_VOICE_NAME: str = os.getenv("TTS_VOICE_NAME", "Microsoft David Desktop")
         self.TTS_RATE: int = int(os.getenv("TTS_RATE", "0"))  # -10 to +10 for SAPI
-
-        # Sarvam Voice Settings
-        self.SARVAM_API_KEY: str = os.getenv("SARVAM_API_KEY", "").strip()
-        self.SARVAM_BASE_URL: str = os.getenv("SARVAM_BASE_URL", "https://api.sarvam.ai").rstrip("/")
-        self.SARVAM_STT_MODEL: str = os.getenv("SARVAM_STT_MODEL", "saaras:v4").strip()
-        self.SARVAM_STT_MODE: str = os.getenv("SARVAM_STT_MODE", "transcribe").strip().lower()
-        self.SARVAM_LANGUAGE: str = os.getenv("SARVAM_LANGUAGE", "hi-IN").strip()
-        self.SARVAM_TTS_MODEL: str = os.getenv("SARVAM_TTS_MODEL", "bulbul:v3").strip()
-        self.SARVAM_TTS_SPEAKER: str = os.getenv("SARVAM_TTS_SPEAKER", "shubh").strip().lower()
-        self.SARVAM_TTS_PACE: float = float(os.getenv("SARVAM_TTS_PACE", "1.0"))
-        self.SARVAM_TTS_TEMPERATURE: float = float(os.getenv("SARVAM_TTS_TEMPERATURE", "0.6"))
-        self.SARVAM_LLM_MODEL: str = os.getenv("SARVAM_LLM_MODEL", "sarvam-105b-conversations").strip()
         self.DAKU_STT_PROVIDER: str = os.getenv("DAKU_STT_PROVIDER", self.STT_PROVIDER)
         self.DAKU_TTS_PROVIDER: str = os.getenv("DAKU_TTS_PROVIDER", self.TTS_PROVIDER)
         self.DAKU_VOICE_STORE_AUDIO: bool = os.getenv("DAKU_VOICE_STORE_AUDIO", "false").strip().lower() == "true"
@@ -106,10 +94,6 @@ class Settings:
     def has_auth_token(self) -> bool:
         """Returns whether a server authentication token is configured."""
         return bool(self.DAKU_AUTH_TOKEN and self.DAKU_AUTH_TOKEN.strip() and self.DAKU_AUTH_TOKEN != "your_secret_auth_token_here")
-
-    def has_sarvam_key(self) -> bool:
-        """Returns whether a valid Sarvam API key is configured."""
-        return bool(self.SARVAM_API_KEY and self.SARVAM_API_KEY.strip() and self.SARVAM_API_KEY != "your_sarvam_api_key_here")
 
     def has_harness_url(self) -> bool:
         """Returns whether a DeepSeek Harness endpoint URL is configured."""

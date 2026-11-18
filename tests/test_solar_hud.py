@@ -107,12 +107,12 @@ class TestSolarHUDIntegration(unittest.TestCase):
     # 2. Strict Zero Secret Leakage
     # -------------------------------------------------------------------------
     def test_03_zero_secret_leakage(self):
-        """TEST 3: Verifies frontend static assets NEVER leak SARVAM_API_KEY or auth credentials."""
+        """TEST 3: Verifies frontend static assets NEVER leak MODEL_API_KEY or auth credentials."""
         for path in ("/hud", "/hud/solar_hud.css", "/hud/solar_hud.js"):
             _, content, _ = self._get(path)
             text = content.decode("utf-8", errors="ignore")
-            if settings.SARVAM_API_KEY:
-                self.assertNotIn(settings.SARVAM_API_KEY, text)
+            if settings.MODEL_API_KEY:
+                self.assertNotIn(settings.MODEL_API_KEY, text)
             self.assertNotIn("sk_", text)
             self.assertNotIn("API_KEY", text)
             self.assertNotIn("test_solar_hud_token", text)
@@ -227,13 +227,11 @@ class TestSolarHUDIntegration(unittest.TestCase):
     # 6. Fallback Transparency & Doctor Verification
     # -------------------------------------------------------------------------
     def test_10_fallback_transparency(self):
-        """TEST 10: Provider report transparently reflects whether Sarvam key is live or standby."""
+        """TEST 10: Provider report transparently reflects STT and TTS providers."""
         status, content, _ = self._get("/api/hud/agents")
         data = json.loads(content.decode("utf-8"))
-        if not settings.has_sarvam_key():
-            self.assertFalse(data.get("sarvam_available"))
-            self.assertIn("Fallback", data.get("stt_provider", ""))
-            self.assertIn("Fallback", data.get("tts_provider", ""))
+        self.assertIn("Google STT", data.get("stt_provider", ""))
+        self.assertIn("Windows SAPI", data.get("tts_provider", ""))
 
     def test_11_doctor_check_solar_hud(self):
         """TEST 11: doctor.py check_solar_hud() passes with status OK."""

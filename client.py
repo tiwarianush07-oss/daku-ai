@@ -193,8 +193,8 @@ class DakuRemoteClient:
         except Exception as e:
             logger.warning(f"Could not deliver confirmation decision: {e}")
 
-    def remote_transcribe(self, audio_bytes: bytes, language: str = "hi-IN") -> Optional[str]:
-        """Transcribes audio using remote server Sarvam STT gateway without local secrets."""
+    def remote_transcribe(self, audio_bytes: bytes, language: str = "en-IN") -> Optional[str]:
+        """Transcribes audio using remote server speech-to-text gateway."""
         if not self.is_connected or not audio_bytes:
             return None
         import base64
@@ -218,8 +218,8 @@ class DakuRemoteClient:
             logger.debug(f"Remote transcribe failed: {e}")
         return None
 
-    def remote_synthesize(self, text: str, language: str = "hi-IN") -> bool:
-        """Synthesizes and plays speech using remote server Sarvam Bulbul gateway without local secrets."""
+    def remote_synthesize(self, text: str, language: str = "en-IN") -> bool:
+        """Synthesizes and plays speech using remote server speech synthesis gateway."""
         if not self.is_connected or not text or not text.strip():
             return False
         import base64

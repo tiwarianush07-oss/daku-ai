@@ -4,7 +4,7 @@
 **Project**: DAKU (Personal Voice AI Agent & Autonomous Swarm)  
 **Host Architecture**: Windows 10/11 AMD64 (AMD Athlon Silver 3050U, 4 GB RAM)  
 **System Profile**: Zero-local LLM, ultra-low memory (<25 MB server working set)  
-**Regression Test Status**: **231 / 231 tests passing** (0 failures, 2 skipped)  
+**Voice Engine**: Direct Google STT with Text Fallback + Native Windows SAPI TTS  
 **DeepSeek Harness (`dsh`) Status**: **INTEGRATED & VERIFIED** (Cordis Bridge Active)  
 **Native Desktop HUD Status**: **COMPLETED & CERTIFIED** (Phase 9 Win32 Tkinter Overlay)  
 **Date**: November 2026  
@@ -18,14 +18,14 @@
 | **Core Architecture & Engine** | 8 Phases | 8 Phases | 0 Phases | **100%** |
 | **User Interfaces (Voice, Web, CLI, Desktop)** | 4 Interfaces | 4 Interfaces | 0 Interfaces | **100%** |
 | **Planned Architectural Milestones** | 5 Milestones | 3 Completed | 2 Milestones (Phases 10, 11) | **60%** |
-| **Environment & Cloud Keys** | 3 Keys | 0 Active | 3 Pending Configuration | **Action Required** |
+| **Environment & Cloud Keys** | 2 Keys | 0 Active | 2 Pending Configuration | **Action Required** |
 | **Production Cloud Deployment** | 5 Tasks | 0 Deployed | 5 Pending Tasks | **Action Required** |
-| **Overall Project Scope** | **25 Tracked Items** | **15 Completed (60%)** | **10 Pending (40%)** | **60%** |
+| **Overall Project Scope** | **24 Tracked Items** | **15 Completed (62.5%)** | **9 Pending (37.5%)** | **62.5%** |
 
 ```mermaid
 pie title DAKU Project Status Breakdown
-    "Completed Capabilities & Milestones (15)" : 60
-    "Pending Milestones, Keys & Deployment (10)" : 40
+    "Completed Capabilities & Milestones (15)" : 62.5
+    "Pending Milestones, Keys & Deployment (9)" : 37.5
 ```
 
 ---
@@ -73,9 +73,10 @@ pie title DAKU Project Status Breakdown
 - **`ReflectionEngine` (`brain/reflection.py`)**: Automatic failure diagnosis and safe strategy pivoting (e.g. Edge when Chrome fails).
 - **`LearningEngine` (`brain/learning.py`)**: Compact, bounded lesson store (max 500 lessons) to remember successful strategies without code alteration.
 
-### [COMPLETED] Phase 6.1: Sarvam AI Voice Agent Integration
-- **Indian Language Support**: Integrated Sarvam Saaras:v4 STT and Bulbul:v3 TTS.
-- **Resilient Fallback**: Automatic failover to Google STT and Windows SAPI if Sarvam API key is missing or network times out.
+### [COMPLETED] Clean Voice Pipeline & Audio Routing
+- **Primary STT**: `speech_recognition` (Google Web STT API endpoint) with instant, bulletproof offline text console fallback.
+- **Primary TTS**: Native Windows SAPI SpeechSynthesizer (`Microsoft David` / `Microsoft Zira`) with 0 MB additional RAM footprint and 100% offline reliability.
+- **TTS Normalizer**: Removes `<think>` reasoning traces, cleans markdown/JSON, and normalizes technical terms for natural spoken prosody.
 
 ### [COMPLETED] Phase 7: Solar Swarm HUD v7.0.0 (Web Dashboard UI)
 - **Celestial Visual Engine**: 2D/3D Canvas visualizer with Central Sun (DAKU Brain) and 4 planetary swarm agents (Researcher, Coder, Vision Analyst, Executive Strategist).
@@ -87,7 +88,7 @@ pie title DAKU Project Status Breakdown
 - **`brain/mcp_gateway.py` & `config/mcp_acl.json`**:
   - Declarative per-server and per-tool Access Control Lists (ACLs).
   - Unknown server safety fallback: any server not explicitly registered defaults to `CONFIRMATION_REQUIRED`.
-  - Token Isolation Boundary: strips `MODEL_API_KEY`, `SARVAM_API_KEY`, `DAKU_AUTH_TOKEN`, and other secrets from child MCP process environments unless explicitly allowlisted.
+  - Token Isolation Boundary: strips `MODEL_API_KEY`, `DAKU_AUTH_TOKEN`, and other secrets from child MCP process environments unless explicitly allowlisted.
   - In-Memory Token-Bucket Rate Limiter: prevents runaway tool loops using `time.monotonic()` with per-server refill rates and burst capacities.
   - Certified by 5/5 unit tests in `tests/test_mcp_gateway.py`.
 
@@ -137,20 +138,19 @@ pie title DAKU Project Status Breakdown
 
 ## 3. Pending Tasks (The Exact Pending List)
 
-There are **10 pending items** categorized across three operational groups:
+There are **9 pending items** categorized across three operational groups:
 
-### Group A: Live Credentials & Configuration (3 Pending Tasks)
+### Group A: Live Credentials & Configuration (2 Pending Tasks)
 1. **[PENDING] Set `MODEL_API_KEY` in `.env`**: Required to unlock live cloud LLM reasoning with DeepSeek (`deepseek-chat`) or OpenAI. Currently falling back gracefully to local deterministic intent matching.
-2. **[PENDING] Set `SARVAM_API_KEY` in `.env`**: Required to activate Sarvam AI's Saaras:v4 (speech-to-text) and Bulbul:v3 (text-to-speech) for Hindi and Indian regional languages. Currently operating on Google STT and Windows SAPI fallback.
-3. **[PENDING] Set `DAKU_AUTH_TOKEN` in `.env`**: Required to enforce constant-time Bearer authentication before exposing the DAKU daemon to remote clients or public internet traffic. Currently running in open local development mode.
+2. **[PENDING] Set `DAKU_AUTH_TOKEN` in `.env`**: Required to enforce constant-time Bearer authentication before exposing the DAKU daemon to remote clients or public internet traffic. Currently running in open local development mode.
 
 ### Group B: Planned Architectural Milestones (2 Pending Milestones)
-4. **[PENDING] Phase 10: Skill Architecture & Reusable Registry**: Standalone, versioned automation skill modules; standard skill manifest (`SKILL.md`); plug-and-play skill registry.
-5. **[PENDING] Phase 11: Money Engine & Opportunity Scanner**: Autonomous web opportunity finder; bounty/freelance scanner; ROI calculation engine and lead discovery.
+3. **[PENDING] Phase 10: Skill Architecture & Reusable Registry**: Standalone, versioned automation skill modules; standard skill manifest (`SKILL.md`); plug-and-play skill registry.
+4. **[PENDING] Phase 11: Money Engine & Opportunity Scanner**: Autonomous web opportunity finder; bounty/freelance scanner; ROI calculation engine and lead discovery.
 
 ### Group C: Production Cloud Hosting Deployment (5 Pending Tasks)
-6. **[PENDING] Provision Oracle Cloud Compute Instance**: Setup Always Free ARM Ampere / x64 Ubuntu VM.
-7. **[PENDING] Firewall Hardening (UFW)**: Allow inbound traffic only on ports 22, 80, 443; block port 8443 from WAN.
-8. **[PENDING] SSL/TLS Reverse Proxy**: Configure Nginx reverse proxy with automated Let's Encrypt certificates.
-9. **[PENDING] Systemd Daemon Service**: Install and enable `daku.service` for 24/7 background operation.
-10. **[PENDING] Public DNS Record**: Bind domain / subdomain to the Oracle Cloud instance public IP.
+5. **[PENDING] Provision Oracle Cloud Compute Instance**: Setup Always Free ARM Ampere / x64 Ubuntu VM.
+6. **[PENDING] Firewall Hardening (UFW)**: Allow inbound traffic only on ports 22, 80, 443; block port 8443 from WAN.
+7. **[PENDING] SSL/TLS Reverse Proxy**: Configure Nginx reverse proxy with automated Let's Encrypt certificates.
+8. **[PENDING] Systemd Daemon Service**: Install and enable `daku.service` for 24/7 background operation.
+9. **[PENDING] Public DNS Record**: Bind domain / subdomain to the Oracle Cloud instance public IP.

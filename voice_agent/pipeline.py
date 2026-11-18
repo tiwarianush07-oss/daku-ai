@@ -1,13 +1,13 @@
 """
 DAKU End-to-End Voice Agent Pipeline
 Integrates:
-Microphone / Audio -> VAD -> Sarvam Saaras STT -> Transcript ->
+Microphone / Audio -> VAD -> Google STT -> Transcript ->
 DAKU Brain / Router -> Planner -> Permission Manager -> Tools -> Verifier ->
-Response -> TTS Normalizer -> Sarvam Bulbul v3 TTS -> Audio Playback.
+Response -> TTS Normalizer -> Windows SAPI TTS -> Audio Playback.
 
 Multi-tier Fallbacks:
-- STT: Sarvam Saaras (v4) -> Google STT -> Console Text Input
-- TTS: Sarvam Bulbul (v3) -> Windows SAPI -> Console Print
+- STT: Google STT -> Console Text Input
+- TTS: Windows SAPI -> Console Print
 """
 
 import logging
@@ -18,8 +18,6 @@ from config.voice_config import voice_config
 from voice.audio import capture_mic_audio, play_audio_bytes
 from voice.providers import (
     GoogleSTTProvider,
-    SarvamSTTProvider,
-    SarvamTTSProvider,
     STTProvider,
     TTSProvider,
     WindowsSapiTTSProvider,
@@ -51,11 +49,10 @@ class VoicePipeline:
         self.normalizer = TTSNormalizer()
 
         # Primary and fallback providers
-        self.sarvam_stt = stt_provider if isinstance(stt_provider, SarvamSTTProvider) else SarvamSTTProvider()
-        self.google_stt = GoogleSTTProvider()
-
-        self.sarvam_tts = tts_provider if isinstance(tts_provider, SarvamTTSProvider) else SarvamTTSProvider()
-        self.windows_tts = WindowsSapiTTSProvider()
+        self.stt_provider = stt_provider or GoogleSTTProvider()
+        self.google_stt = self.stt_provider
+        self.tts_provider = tts_provider or WindowsSapiTTSProvider()
+        self.windows_tts = self.tts_provider
 
         # Configured preference
         self.preferred_stt = voice_config.DAKU_STT_PROVIDER
@@ -67,31 +64,18 @@ class VoicePipeline:
         language: Optional[str] = None,
     ) -> Tuple[Optional[str], str, float, bool]:
         """
-        Transcribes audio through STT cascade:
-        1. Sarvam Saaras (if configured and available)
-        2. Google STT (cloud fallback)
+        Transcribes audio through Google STT.
         Returns (transcript, provider_used, latency_ms, fallback_used).
         """
-        lang = language or voice_config.SARVAM_LANGUAGE
+        lang = language or getattr(voice_config, "LANGUAGE", "en-IN")
         fallback_used = False
 
-        # Attempt 1: Sarvam STT
-        if self.preferred_stt == "sarvam" and self.sarvam_stt.is_available():
-            t0 = time.perf_counter()
-            res = self.sarvam_stt.transcribe(audio_bytes, language=lang)
-            if res and res.text:
-                latency_ms = (time.perf_counter() - t0) * 1000.0
-                return res.text, "sarvam", latency_ms, False
-            logger.info("Sarvam STT failed or unavailable. Falling back to Google STT.")
-            fallback_used = True
-
-        # Attempt 2: Google STT fallback
-        if self.google_stt.is_available():
+        if self.google_stt and self.google_stt.is_available():
             t0 = time.perf_counter()
             res = self.google_stt.transcribe(audio_bytes, language=lang)
             if res and res.text:
                 latency_ms = (time.perf_counter() - t0) * 1000.0
-                return res.text, "google_stt", latency_ms, fallback_used
+                return res.text, "google_stt", latency_ms, False
 
         return None, "none", 0.0, fallback_used
 
@@ -102,40 +86,27 @@ class VoicePipeline:
     ) -> Tuple[bool, str, float, bool]:
         """
         Synthesizes and plays speech through TTS cascade:
-        1. Sarvam Bulbul v3 (if configured and available)
-        2. Windows SAPI (native zero-RAM fallback)
-        3. Console print fallback
+        1. Windows SAPI (native zero-RAM primary)
+        2. Console print fallback
         Returns (success, provider_used, latency_ms, fallback_used).
         """
         if not text or not text.strip():
             return True, "none", 0.0, False
 
         # Normalize text for speech output
-        clean_text = self.normalizer.clean_for_speech(text, target_lang=language or voice_config.SARVAM_LANGUAGE)
+        clean_text = self.normalizer.clean_for_speech(text, target_lang=language or getattr(voice_config, "LANGUAGE", "en-IN"))
         fallback_used = False
 
-        # Attempt 1: Sarvam Bulbul v3
-        if self.preferred_tts == "sarvam" and self.sarvam_tts.is_available():
-            t0 = time.perf_counter()
-            res = self.sarvam_tts.synthesize(clean_text, language=language)
-            if res and res.audio_bytes:
-                latency_ms = (time.perf_counter() - t0) * 1000.0
-                played = play_audio_bytes(res.audio_bytes)
-                if played:
-                    return True, "sarvam", latency_ms, False
-
-            logger.info("Sarvam Bulbul TTS failed or playback failed. Falling back to Windows SAPI.")
-            fallback_used = True
-
-        # Attempt 2: Windows Native SAPI
-        if self.windows_tts.is_available():
+        # Primary: Windows Native SAPI
+        if self.windows_tts and self.windows_tts.is_available():
             t0 = time.perf_counter()
             spoken = self.windows_tts.speak(clean_text)
             latency_ms = (time.perf_counter() - t0) * 1000.0
             if spoken:
-                return True, "windows_sapi", latency_ms, fallback_used
+                return True, "windows_sapi", latency_ms, False
+            fallback_used = True
 
-        # Attempt 3: Console print fallback
+        # Fallback: Console print
         print(f"[Spoken Output Fallback]: {clean_text}")
         return True, "text_fallback", 0.0, True
 
